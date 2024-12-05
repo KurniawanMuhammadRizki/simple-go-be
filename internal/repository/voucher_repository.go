@@ -43,6 +43,22 @@ func (b *VoucherRepository) GetByID(db *gorm.DB, id int64) (*entity.Voucher, err
 	return &voucher, nil
 }
 
+func (b *VoucherRepository) GetAllByBrand(db *gorm.DB, brandID int64) ([]entity.Voucher, error) {
+	var vouchers []entity.Voucher
+
+	err := db.Where("brand_id = ?", brandID).Find(&vouchers).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			b.Log.WithField("brand_id", brandID).Error("no vouchers found for the given brand")
+			return nil, err
+		}
+		b.Log.Error(err)
+		return nil, err
+	}
+
+	return vouchers, nil
+}
+
 // Update implements VoucherRepository.
 func (b *VoucherRepository) Update(db *gorm.DB, voucher *entity.Voucher) (*entity.Voucher, error) {
 	err := db.Where("id = ?", voucher.ID).Updates(voucher).Error
