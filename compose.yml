@@ -1,12 +1,71 @@
+# services:
+#   postgres:
+#     container_name: main_db
+#     image: postgres:alpine
+#     restart: always
+#     env_file:
+#       - .env
+#     ports:
+#       - ${POSTGRES_PORT}:5432
+
+# volumes:
+#   postgres:
+
+version: "3.8"
+
 services:
   postgres:
-    container_name: main_db
     image: postgres:alpine
-    restart: always
-    env_file:
-      - .env
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: postgres
     ports:
-      - ${POSTGRES_PORT}:5432
+      - "5432:5432"
+    networks:
+      - mynetwork
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: postgres
+    networks:
+      - mynetwork
+    ports:
+      - "8080:8080"
+
+  migrate:
+    image: migrate/migrate
+    volumes:
+      - ./db/migrations:/migrations
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      -path=/migrations 
+      -database postgres://admin:admin@postgres:5432/postgres?sslmode=disable 
+      up
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+    driver: bridge
 
 volumes:
-  postgres:
+  postgres-data:

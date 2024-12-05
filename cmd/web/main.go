@@ -1,13 +1,29 @@
 package main
 
 import (
-	"github.com/gofiber/fiber/v2"
+	"fmt"
+
+	"github.com/KurniawanMuhammadRizki/simple-go-be/internal/config"
 )
 
 func main() {
-	app := fiber.New()
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Halo Gaes")
-	})
-	app.Listen(":3000")
+	viperConfig := config.LoadConfig()
+	log := config.NewLogger(viperConfig)
+	db := config.NewDatabase(viperConfig, log)
+	app := config.NewFiber(viperConfig)
+
+	cfg := &config.AppConfig{
+		DB:     db,
+		App:    app,
+		Log:    log,
+		Config: viperConfig,
+	}
+
+	cfg.Run()
+
+	webPort := viperConfig.GetInt("APP_PORT")
+	err := app.Listen(fmt.Sprintf(":%d", webPort))
+	if err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }
