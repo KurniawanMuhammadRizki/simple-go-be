@@ -1,0 +1,12 @@
+services:
+  postgres:
+    container_name: main_db
+    image: postgres:alpine
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - ${POSTGRES_PORT}:5432
+
+volumes:
+  postgres:
