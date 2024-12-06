@@ -73,7 +73,6 @@ func (p *transactionUsecase) GetAllByCustomer(ctx context.Context, customerID in
 		return nil, err
 	}
 
-	// Convert transactions to response
 	var responses []model.CreateTransactionResponse
 	for _, transaction := range transactions {
 		responses = append(responses, converter.ToCreateTransactionResponse(transaction))
