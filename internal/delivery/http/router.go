@@ -3,9 +3,10 @@ package http
 import "github.com/gofiber/fiber/v2"
 
 type Router struct {
-	App             *fiber.App
-	BrandController *BrandController
-	AuthMiddleware  fiber.Handler
+	App               *fiber.App
+	BrandController   *BrandController
+	VoucherController *VoucherController
+	AuthMiddleware    fiber.Handler
 }
 
 type router interface {
@@ -14,11 +15,12 @@ type router interface {
 	registerPrivateEndpoints()
 }
 
-func NewRouter(app *fiber.App, brandController *BrandController, authMiddleware fiber.Handler) router {
+func NewRouter(app *fiber.App, brandController *BrandController, voucherController *VoucherController, authMiddleware fiber.Handler) router {
 	return &Router{
-		App:             app,
-		BrandController: brandController,
-		AuthMiddleware:  authMiddleware,
+		App:               app,
+		BrandController:   brandController,
+		VoucherController: voucherController,
+		AuthMiddleware:    authMiddleware,
 	}
 }
 
@@ -44,4 +46,9 @@ func (r *Router) registerPublicEndpoints() {
 	r.App.Get("/brands/:id", r.BrandController.GetBrandByID)
 	r.App.Put("/brands/:id", r.BrandController.UpdateBrand)
 	r.App.Delete("/brands/:id", r.BrandController.DeleteBrand)
+	r.App.Post("/vouchers", r.VoucherController.CreateVoucher)
+	r.App.Get("/vouchers/:id", r.VoucherController.GetVoucherByID)
+	r.App.Get("/vouchers/brand", r.VoucherController.GetAllByBrand)
+	r.App.Put("/vouchers/:id", r.VoucherController.UpdateVoucher)
+	r.App.Delete("/vouchers/:id", r.VoucherController.DeleteVoucher)
 }

@@ -15,6 +15,7 @@ import (
 type VoucherUsecase interface {
 	CreateVoucher(ctx context.Context, req *model.CreateVoucherRequest) (*model.CreateVoucherResponse, error)
 	GetVoucherByID(ctx context.Context, id int64) (*model.CreateVoucherResponse, error)
+	GetAllByBrand(ctx context.Context, brandID int64) ([]model.CreateVoucherResponse, error)
 	UpdateVoucher(ctx context.Context, req *model.UpdateVoucherRequest, id int64) (*model.CreateVoucherResponse, error)
 	DeleteVoucher(ctx context.Context, id int64) (*model.DeleteVoucherResponse, error)
 }

@@ -77,6 +77,38 @@ func (p *VoucherController) GetVoucherByID(ctx *fiber.Ctx) error {
 	})
 }
 
+func (p *VoucherController) GetAllByBrand(ctx *fiber.Ctx) error {
+
+	brandID := ctx.QueryInt("id")
+	if brandID <= 0 {
+		p.Log.Error("invalid or missing brand_id in query")
+		return ctx.Status(fiber.StatusBadRequest).JSON(model.WebResponse[any]{
+			Message: "invalid or missing brand id",
+			Success: false,
+		})
+	}
+
+	vouchers, err := p.Usecase.GetAllByBrand(ctx.Context(), int64(brandID))
+	if err != nil {
+		p.Log.WithError(err).Error("failed to get vouchers by brand")
+		return ctx.Status(fiber.StatusInternalServerError).JSON(model.WebResponse[any]{
+			Message: "failed to retrieve vouchers for the specified brand",
+			Success: false,
+		})
+	}
+
+	var voucherPointers []*model.CreateVoucherResponse
+	for i := range vouchers {
+		voucherPointers = append(voucherPointers, &vouchers[i])
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(model.WebResponse[[]*model.CreateVoucherResponse]{
+		Data:    voucherPointers,
+		Success: true,
+		Message: "vouchers retrieved successfully",
+	})
+}
+
 func (p *VoucherController) UpdateVoucher(ctx *fiber.Ctx) error {
 	id, err := ctx.ParamsInt("id")
 	if err != nil {
