@@ -3,11 +3,12 @@ package http
 import "github.com/gofiber/fiber/v2"
 
 type Router struct {
-	App                *fiber.App
-	BrandController    *BrandController
-	VoucherController  *VoucherController
-	CustomerController *CustomerController
-	AuthMiddleware     fiber.Handler
+	App                   *fiber.App
+	BrandController       *BrandController
+	VoucherController     *VoucherController
+	CustomerController    *CustomerController
+	TransactionController *TransactionController
+	AuthMiddleware        fiber.Handler
 }
 
 type router interface {
@@ -16,7 +17,7 @@ type router interface {
 	registerPrivateEndpoints()
 }
 
-func NewRouter(app *fiber.App, brandController *BrandController, voucherController *VoucherController, customerController *CustomerController, authMiddleware fiber.Handler) router {
+func NewRouter(app *fiber.App, brandController *BrandController, voucherController *VoucherController, customerController *CustomerController, transactionController *TransactionController, authMiddleware fiber.Handler) router {
 	return &Router{
 		App:                app,
 		BrandController:    brandController,
@@ -58,5 +59,9 @@ func (r *Router) registerPublicEndpoints() {
 	//customer
 	r.App.Post("/customers", r.CustomerController.CreateCustomer)
 	r.App.Get("/customers/:id", r.CustomerController.GetCustomerByID)
+	//transaction
+	r.App.Post("/transactions", r.TransactionController.CreateTransaction)
+	r.App.Get("/transactions/customer", r.TransactionController.GetAllByCustomer)
+	r.App.Get("/transactions/:id", r.TransactionController.GetTransactionByID)
 
 }
