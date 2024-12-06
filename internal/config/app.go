@@ -21,16 +21,20 @@ type AppConfig struct {
 func (cfg *AppConfig) Run() {
 	// setup repositories
 	brandRepository := repository.NewBrandRepository(cfg.Log)
+	voucherRepository := repository.NewVoucherRepository(cfg.Log)
 	// setup use cases
 	brandUseCase := usecase.NewBrandUsecase(brandRepository, cfg.Log, cfg.DB)
+	voucherUseCase := usecase.NewVoucherUsecase(voucherRepository, cfg.Log, cfg.DB)
 	// setup controller
 	brandController := http.NewBrandController(&brandUseCase, cfg.Log)
+	voucherController := http.NewVoucherController(&voucherUseCase, cfg.Log)
 	// setup middleware
 	authMiddleware := middleware.NewAuth()
 	routeConfig := http.Router{
-		App:             cfg.App,
-		BrandController: brandController,
-		AuthMiddleware:  authMiddleware,
+		App:               cfg.App,
+		BrandController:   brandController,
+		VoucherController: voucherController,
+		AuthMiddleware:    authMiddleware,
 	}
 	routeConfig.Setup()
 }

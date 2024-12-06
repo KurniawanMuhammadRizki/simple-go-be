@@ -47,8 +47,8 @@ func (r *Router) registerPublicEndpoints() {
 	r.App.Put("/brands/:id", r.BrandController.UpdateBrand)
 	r.App.Delete("/brands/:id", r.BrandController.DeleteBrand)
 	r.App.Post("/vouchers", r.VoucherController.CreateVoucher)
-	r.App.Get("/vouchers/:id", r.VoucherController.GetVoucherByID)
 	r.App.Get("/vouchers/brand", r.VoucherController.GetAllByBrand)
+	r.App.Get("/vouchers/:id", r.VoucherController.GetVoucherByID)
 	r.App.Put("/vouchers/:id", r.VoucherController.UpdateVoucher)
 	r.App.Delete("/vouchers/:id", r.VoucherController.DeleteVoucher)
 }
