@@ -3,12 +3,13 @@ package http
 import "github.com/gofiber/fiber/v2"
 
 type Router struct {
-	App                   *fiber.App
-	BrandController       *BrandController
-	VoucherController     *VoucherController
-	CustomerController    *CustomerController
-	TransactionController *TransactionController
-	AuthMiddleware        fiber.Handler
+	App                         *fiber.App
+	BrandController             *BrandController
+	VoucherController           *VoucherController
+	CustomerController          *CustomerController
+	TransactionController       *TransactionController
+	TransactionDetailController *TransactionDetailController
+	AuthMiddleware              fiber.Handler
 }
 
 type router interface {
@@ -17,13 +18,15 @@ type router interface {
 	registerPrivateEndpoints()
 }
 
-func NewRouter(app *fiber.App, brandController *BrandController, voucherController *VoucherController, customerController *CustomerController, transactionController *TransactionController, authMiddleware fiber.Handler) router {
+func NewRouter(app *fiber.App, brandController *BrandController, voucherController *VoucherController, customerController *CustomerController, transactionController *TransactionController, transactionDetailController *TransactionDetailController, authMiddleware fiber.Handler) router {
 	return &Router{
-		App:                app,
-		BrandController:    brandController,
-		VoucherController:  voucherController,
-		CustomerController: customerController,
-		AuthMiddleware:     authMiddleware,
+		App:                         app,
+		BrandController:             brandController,
+		VoucherController:           voucherController,
+		CustomerController:          customerController,
+		TransactionController:       transactionController,
+		TransactionDetailController: transactionDetailController,
+		AuthMiddleware:              authMiddleware,
 	}
 }
 
@@ -63,5 +66,9 @@ func (r *Router) registerPublicEndpoints() {
 	r.App.Post("/transactions", r.TransactionController.CreateTransaction)
 	r.App.Get("/transactions/customer", r.TransactionController.GetAllByCustomer)
 	r.App.Get("/transactions/:id", r.TransactionController.GetTransactionByID)
+	//transaction detail
+	r.App.Post("/transaction-details", r.TransactionDetailController.CreateTransactionDetail)
+	r.App.Get("/transaction-details/transaction", r.TransactionDetailController.GetAllByTransaction)
+	r.App.Get("/transaction-details/:id", r.TransactionDetailController.GetTransactionDetailByID)
 
 }
