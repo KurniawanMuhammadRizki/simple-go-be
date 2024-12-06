@@ -12,7 +12,6 @@ func ToTransactionDetailEntity(req model.CreateTransactionDetailRequest) entity.
 		TransactionID: req.TransactionID,
 		VoucherID:     req.VoucherID,
 		Quantity:      int(req.Quantity),
-		SubTotalCost:  req.SubTotalCost,
 		CreatedAt:     time.Now(),
 	}
 }

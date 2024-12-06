@@ -5,7 +5,6 @@ type CreateTransactionDetailRequest struct {
 	VoucherID     int64 `json:"voucher_id" validate:"required"`
 	CostInPoint   int64 `json:"cost_in_point" validate:"required"`
 	Quantity      int   `json:"quantity" validate:"required"`
-	SubTotalCost  int64 `json:"sub_total_cost" validate:"required"`
 }
 
 type CreateTransactionDetailResponse struct {

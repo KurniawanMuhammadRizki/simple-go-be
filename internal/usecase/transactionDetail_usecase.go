@@ -7,6 +7,7 @@ import (
 	"github.com/KurniawanMuhammadRizki/simple-go-be/internal/model"
 	"github.com/KurniawanMuhammadRizki/simple-go-be/internal/model/converter"
 	"github.com/KurniawanMuhammadRizki/simple-go-be/internal/repository"
+
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
@@ -19,6 +20,7 @@ type TransactionDetailUsecase interface {
 
 type transactionDetailUsecase struct {
 	TransactionDetailRepository *repository.TransactionDetailRepository
+	VoucherRepository           *repository.VoucherRepository
 	Log                         *logrus.Logger
 	DB                          *gorm.DB
 }
@@ -37,14 +39,27 @@ func NewTransactionDetailUsecase(
 
 func (p *transactionDetailUsecase) CreateTransactionDetail(ctx context.Context, req *model.CreateTransactionDetailRequest) (*model.CreateTransactionDetailResponse, error) {
 	tx := p.DB.Begin()
-	transactionDetail := converter.ToTransactionDetailEntity(*req)
-	savedTransactionDetail, err := p.TransactionDetailRepository.Save(tx, &transactionDetail)
 
+	voucher, err := p.VoucherRepository.GetByID(tx, req.VoucherID)
+	if err != nil {
+		tx.Rollback()
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			p.Log.WithError(err).Error("voucher not found")
+			return nil, errors.New("voucher not found")
+		}
+		p.Log.WithError(err).Error("failed to fetch voucher")
+		return nil, err
+	}
+
+	transactionDetail := converter.ToTransactionDetailEntity(*req)
+	transactionDetail.SubTotalCost = int64(voucher.CostInPoint) * int64(req.Quantity)
+	savedTransactionDetail, err := p.TransactionDetailRepository.Save(tx, &transactionDetail)
 	if err != nil {
 		tx.Rollback()
 		p.Log.WithError(err).Error("failed to save transactionDetail")
 		return nil, err
 	}
+
 	response := converter.ToCreateTransactionDetailResponse(*savedTransactionDetail)
 	return &response, tx.Commit().Error
 }
