@@ -97,6 +97,14 @@ func (p *TransactionDetailController) GetAllByTransaction(ctx *fiber.Ctx) error 
 		})
 	}
 
+	if len(transactionDetails) == 0 {
+		p.Log.Warnf("no transaction details found for customer id: %d", transactionID)
+		return ctx.Status(fiber.StatusNotFound).JSON(model.WebResponse[any]{
+			Message: "no transaction details found for the specified transaction",
+			Success: false,
+		})
+	}
+
 	var transactionDetailPointers []*model.CreateTransactionDetailResponse
 	for i := range transactionDetails {
 		transactionDetailPointers = append(transactionDetailPointers, &transactionDetails[i])
