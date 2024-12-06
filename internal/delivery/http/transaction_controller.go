@@ -116,3 +116,33 @@ func (p *TransactionController) GetAllByCustomer(ctx *fiber.Ctx) error {
 		Message: "transactions retrieved successfully",
 	})
 }
+
+func (p *TransactionController) CreateRedemption(ctx *fiber.Ctx) error {
+	// Parsing request body
+	request := new(model.CreateRedemptionRequest)
+	if err := ctx.BodyParser(request); err != nil {
+		p.Log.WithError(err).Error("Failed to parse request body")
+		return ctx.Status(fiber.StatusBadRequest).JSON(model.WebResponse[any]{
+			Message: "invalid request body format",
+			Success: false,
+		})
+	}
+
+	// Panggil Usecase untuk membuat redemption
+	p.Log.Info("Processing CreateRedemption request")
+	resp, err := p.Usecase.CreateRedemption(ctx.Context(), request)
+	if err != nil {
+		p.Log.WithError(err).Error("Failed to create redemption")
+		return ctx.Status(fiber.StatusInternalServerError).JSON(model.WebResponse[any]{
+			Success: false,
+			Message: "failed to create redemption",
+		})
+	}
+
+	p.Log.Infof("Redemption created successfully: TransactionID=%d", resp.TransactionID)
+	return ctx.Status(fiber.StatusCreated).JSON(model.WebResponse[*model.CreateRedemptionResponse]{
+		Data:    resp,
+		Success: true,
+		Message: "redemption created successfully",
+	})
+}

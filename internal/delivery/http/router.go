@@ -68,7 +68,9 @@ func (r *Router) registerPublicEndpoints() {
 	r.App.Get("/transactions/:id", r.TransactionController.GetTransactionByID)
 	//transaction detail
 	r.App.Post("/transaction-details", r.TransactionDetailController.CreateTransactionDetail)
-	r.App.Get("/transaction-details/transaction", r.TransactionDetailController.GetAllByTransaction)
+	r.App.Get("/transaction/redemption/transactionId", r.TransactionDetailController.GetAllByTransaction)
 	r.App.Get("/transaction-details/:id", r.TransactionDetailController.GetTransactionDetailByID)
+	//redemption
+	r.App.Post("/transaction/redemption", r.TransactionController.CreateRedemption)
 
 }

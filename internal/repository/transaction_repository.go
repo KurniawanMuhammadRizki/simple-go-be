@@ -58,3 +58,17 @@ func (b *TransactionRepository) GetAllByCustomer(db *gorm.DB, CustomerID int64) 
 
 	return transactions, nil
 }
+
+func (b *TransactionRepository) Update(db *gorm.DB, transaction *entity.Transaction) (*entity.Transaction, error) {
+	err := db.Where("id = ?", transaction.ID).Updates(transaction).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			b.Log.WithField("id", transaction.ID).Error("transaction not found")
+			return nil, err
+		}
+		b.Log.Error(err)
+		return nil, err
+	}
+
+	return b.GetByID(db, transaction.ID)
+}

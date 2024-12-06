@@ -3,7 +3,6 @@ package model
 type CreateTransactionDetailRequest struct {
 	TransactionID int64 `json:"transaction_id" validate:"required"`
 	VoucherID     int64 `json:"voucher_id" validate:"required"`
-	CostInPoint   int64 `json:"cost_in_point" validate:"required"`
 	Quantity      int   `json:"quantity" validate:"required"`
 }
 

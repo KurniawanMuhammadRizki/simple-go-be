@@ -15,23 +15,28 @@ type TransactionUsecase interface {
 	CreateTransaction(ctx context.Context, req *model.CreateTransactionRequest) (*model.CreateTransactionResponse, error)
 	GetTransactionByID(ctx context.Context, id int64) (*model.CreateTransactionResponse, error)
 	GetAllByCustomer(ctx context.Context, customerID int64) ([]model.CreateTransactionResponse, error)
+	CreateRedemption(ctx context.Context, req *model.CreateRedemptionRequest) (*model.CreateRedemptionResponse, error)
 }
 
 type transactionUsecase struct {
-	TransactionRepository *repository.TransactionRepository
-	Log                   *logrus.Logger
-	DB                    *gorm.DB
+	TransactionRepository    *repository.TransactionRepository
+	VoucherRepository        *repository.VoucherRepository
+	TransactionDetailUsecase TransactionDetailUsecase
+	Log                      *logrus.Logger
+	DB                       *gorm.DB
 }
 
 func NewTransactionUsecase(
 	transactionRepository *repository.TransactionRepository,
+	transactionDetailUsecase TransactionDetailUsecase,
 	log *logrus.Logger,
 	db *gorm.DB,
 ) TransactionUsecase {
 	return &transactionUsecase{
-		TransactionRepository: transactionRepository,
-		Log:                   log,
-		DB:                    db,
+		TransactionRepository:    transactionRepository,
+		TransactionDetailUsecase: transactionDetailUsecase,
+		Log:                      log,
+		DB:                       db,
 	}
 }
 
@@ -79,4 +84,88 @@ func (p *transactionUsecase) GetAllByCustomer(ctx context.Context, customerID in
 	}
 
 	return responses, nil
+}
+
+func (p *transactionUsecase) CreateRedemption(ctx context.Context, req *model.CreateRedemptionRequest) (*model.CreateRedemptionResponse, error) {
+	tx := p.DB.Begin()
+
+	if p.TransactionDetailUsecase == nil {
+		p.Log.Error("TransactionDetailUsecase is nil")
+		tx.Rollback()
+		return nil, errors.New("TransactionDetailUsecase is not initialized")
+	}
+
+	p.Log.Info("Starting redemption creation process")
+
+	transactionReq := &model.CreateTransactionRequest{
+		CustomerID: req.CustomerID,
+		TotalCost:  0, // dihitung nanti
+	}
+
+	transaction, err := p.CreateTransaction(ctx, transactionReq)
+	if err != nil {
+		p.Log.WithError(err).Error("Failed to create transaction")
+		tx.Rollback()
+		return nil, err
+	}
+
+	p.Log.Infof("Transaction created successfully: ID=%d", transaction.ID)
+
+	var totalCost int64
+	var redemptionDetails []model.CreateTransactionDetailResponse
+
+	for _, item := range req.VoucherItems {
+		transactionDetailReq := &model.CreateTransactionDetailRequest{
+			TransactionID: transaction.ID,
+			VoucherID:     item.VoucherID,
+			Quantity:      item.Quantity,
+		}
+
+		if p.TransactionDetailUsecase == nil {
+			p.Log.Error("TransactionDetailUsecase is nil")
+			tx.Rollback()
+			return nil, errors.New("TransactionDetailUsecase is not initialized")
+		}
+
+		detailTransaction, err := p.TransactionDetailUsecase.CreateTransactionDetail(ctx, transactionDetailReq)
+		if err != nil {
+			p.Log.WithError(err).Errorf("Failed to create transaction detail for VoucherID=%d", item.VoucherID)
+			tx.Rollback()
+			return nil, err
+		}
+
+		p.Log.Infof("Transaction detail created: TransactionID=%d, VoucherID=%d, SubTotalCost=%d",
+			detailTransaction.TransactionID, detailTransaction.VoucherID, detailTransaction.SubTotalCost)
+
+		totalCost += detailTransaction.SubTotalCost
+		redemptionDetails = append(redemptionDetails, *detailTransaction)
+	}
+
+	transaction.TotalCost = totalCost
+	existingTransaction, err := p.TransactionRepository.GetByID(tx, transaction.ID)
+	if err != nil {
+		p.Log.WithError(err).Error("Transaction not foundd")
+		tx.Rollback()
+		return nil, err
+	}
+	existingTransaction.TotalCost = totalCost
+	p.Log.Infof("Transaction Entity to Update: %+v", existingTransaction)
+
+	_, err = p.TransactionRepository.Update(tx, existingTransaction)
+	if err != nil {
+		p.Log.WithError(err).Error("Failed to update transaction")
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		p.Log.WithError(err).Error("Failed to commit transaction")
+		return nil, err
+	}
+
+	p.Log.Info("Redemption creation process completed successfully")
+	return &model.CreateRedemptionResponse{
+		TransactionID: transaction.ID,
+		Details:       redemptionDetails,
+	}, nil
 }

@@ -30,8 +30,8 @@ func (cfg *AppConfig) Run() {
 	brandUseCase := usecase.NewBrandUsecase(brandRepository, cfg.Log, cfg.DB)
 	voucherUseCase := usecase.NewVoucherUsecase(voucherRepository, cfg.Log, cfg.DB)
 	customerUseCase := usecase.NewCustomerUsecase(customerRepository, cfg.Log, cfg.DB)
-	transactionUseCase := usecase.NewTransactionUsecase(transactionRepository, cfg.Log, cfg.DB)
 	transactionDetailUseCase := usecase.NewTransactionDetailUsecase(transactionDetailRepository, cfg.Log, cfg.DB)
+	transactionUseCase := usecase.NewTransactionUsecase(transactionRepository, transactionDetailUseCase, cfg.Log, cfg.DB)
 
 	// setup controller
 	brandController := http.NewBrandController(&brandUseCase, cfg.Log)
